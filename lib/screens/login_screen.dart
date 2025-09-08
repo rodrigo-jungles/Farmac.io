@@ -1,3 +1,4 @@
+import 'package:farmacio_app/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -43,6 +44,10 @@ class _LoginScreenState extends State<LoginScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   // Aqui você pode adicionar a lógica de autenticação
+                  Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => HomeScreen()),
+              );
                   final email = _emailController.text;
                   final password = _passwordController.text;
                   ScaffoldMessenger.of(
