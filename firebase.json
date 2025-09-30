@@ -1,0 +1,34 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "farmacio-dbd69",
+          "appId": "1:443280514584:android:c502041a9e26894d3d6d6d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "farmacio-dbd69",
+          "configurations": {
+            "android": "1:443280514584:android:c502041a9e26894d3d6d6d",
+            "ios": "1:443280514584:ios:d15f94c5d65ab7e43d6d6d",
+            "macos": "1:443280514584:ios:d15f94c5d65ab7e43d6d6d",
+            "web": "1:443280514584:web:f97adcd4f52740953d6d6d",
+            "windows": "1:443280514584:web:5cba37d52e1ade9e3d6d6d"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
