@@ -2,6 +2,8 @@ import 'package:farmacio_app/models/userModel.dart';
 import 'package:farmacio_app/repository/authReposutory.dart';
 import 'package:farmacio_app/screens/home_screen.dart';
 import 'package:farmacio_app/screens/login_screen.dart';
+import 'package:farmacio_app/service/authService.dart';
+import 'package:farmacio_app/service/sessionService.dart';
 // Note: this project doesn't have separate authService/sessionService files in lib/service
 // If you have implementations, adjust the imports below. For now we'll use the repository for auth actions and
 // a simple placeholder for session-like behavior.
@@ -50,8 +52,8 @@ class AuthController extends GetxController {
 
   Future<void> loginGoogle() async {
     await _run(() async {
-      final u = await _auth.signInWithGoogle();
-      await _afterFirebaseLogin(u, loginProviderIsGoogle: true);
+      //final u = await _auth.signInWithGoogle();
+      //await _afterFirebaseLogin(u, loginProviderIsGoogle: true);
     });
   }
 
@@ -112,7 +114,7 @@ class AuthController extends GetxController {
     current = local;
 
     // 5) Redireciona pela permissão (se quiser telas distintas por perfil, ajuste aqui)
-    Get.offAll(() => const home_screen());
+    Get.offAll(() => const HomeScreen());
   }
 
   Future<void> _run(Future<void> Function() body, {bool showErrors = true}) async {
