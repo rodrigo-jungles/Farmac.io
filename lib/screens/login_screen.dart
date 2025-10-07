@@ -1,4 +1,6 @@
+import 'package:farmacio_app/controller/authController.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -8,37 +10,228 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  bool isSignUp = false;
+  bool _obscure = true;
+
+  final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final AuthController _auth = Get.put(AuthController());
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
+  String? _validateEmail(String? v) {
+    final value = v?.trim() ?? '';
+    if (value.isEmpty) return 'Informe o e-mail';
+    final ok = RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(value);
+    if (!ok) return 'E-mail inválido';
+    return null;
+  }
+
+  String? _validatePassword(String? v) {
+    final value = v ?? '';
+    if (value.length < 6) return 'Mínimo 6 caracteres';
+    return null;
+  }
+
+  String? _validateName(String? v) {
+    if (!isSignUp) return null;
+    final value = v?.trim() ?? '';
+    if (value.length < 2) return 'Informe seu nome';
+    return null;
+  }
+
+  Future<void> _submit() async {
+    final form = _formKey.currentState;
+    if (form == null || !form.validate()) return;
+    FocusScope.of(context).unfocus();
+
+    if (isSignUp) {
+      await _auth.registerEmail(_emailCtrl.text.trim(), _passCtrl.text.trim());
+    } else {
+      await _auth.loginEmail(_emailCtrl.text.trim(), _passCtrl.text.trim());
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-  return Scaffold(
-   body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'Email'),
+    final w = MediaQuery.of(context).size.width;
+
+    return Scaffold(
+      backgroundColor: Colors.amber,
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 420),
+              child: Card(
+                elevation: 0,
+                margin: EdgeInsets.symmetric(horizontal: w < 480 ? 8 : 0),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+                  child: Obx(() => Form(
+                        key: _formKey,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const SizedBox(height: 8),
+                            Text(
+                              isSignUp ? 'Criar conta' : 'Entrar',
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.black,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+
+                            if (_auth.errorMessage.value != null) ...[
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: Colors.red.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.red),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.error_outline, color: Colors.red),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _auth.errorMessage.value!,
+                                        style: const TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+
+                            if (isSignUp) ...[
+                              TextFormField(
+                                controller: _nameCtrl,
+                                decoration: const InputDecoration(
+                                  labelText: 'Nome',
+                                  hintText: 'Seu nome completo',
+                                  prefixIcon: Icon(Icons.person_outline),
+                                ),
+                                textInputAction: TextInputAction.next,
+                                validator: _validateName,
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+
+                            TextFormField(
+                              controller: _emailCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'E-mail',
+                                hintText: 'seuemail@exemplo.com',
+                                prefixIcon: Icon(Icons.email_outlined),
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              validator: _validateEmail,
+                            ),
+                            const SizedBox(height: 12),
+
+                            TextFormField(
+                              controller: _passCtrl,
+                              decoration: InputDecoration(
+                                labelText: 'Senha',
+                                hintText: 'Mínimo 6 caracteres',
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                suffixIcon: IconButton(
+                                  onPressed: () => setState(() => _obscure = !_obscure),
+                                  icon: Icon(
+                                      _obscure ? Icons.visibility : Icons.visibility_off),
+                                  tooltip: _obscure
+                                      ? 'Mostrar senha'
+                                      : 'Ocultar senha',
+                                ),
+                              ),
+                              obscureText: _obscure,
+                              textInputAction: TextInputAction.done,
+                              onFieldSubmitted: (_) => _submit(),
+                              validator: _validatePassword,
+                            ),
+                            const SizedBox(height: 20),
+
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: _auth.isLoading.value ? null : _submit,
+                                style: ElevatedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(28),
+                                  ),
+                                ),
+                                child: _auth.isLoading.value
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : Text(isSignUp ? 'CRIAR CONTA' : 'ENTRAR'),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            TextButton(
+                              onPressed: _auth.isLoading.value
+                                  ? null
+                                  : () => setState(() => isSignUp = !isSignUp),
+                              child: Text(isSignUp
+                                  ? 'Já tem conta? Entrar'
+                                  : 'Não tem conta? Criar conta'),
+                            ),
+
+                            const SizedBox(height: 18),
+                            Row(
+                              children: const [
+                                Expanded(child: Divider(thickness: 1)),
+                                Padding(
+                                  padding:
+                                      EdgeInsets.symmetric(horizontal: 10),
+                                  child: Text("ou"),
+                                ),
+                                Expanded(child: Divider(thickness: 1)),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed:
+                                    _auth.isLoading.value ? null : _auth.loginGoogle,
+                                icon: Image.asset(
+                                  'assets/icons/google.png',
+                                  height: 20,
+                                ),
+                                label: const Text('Entrar com Google'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                ),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-              ),
-              const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: () {
-                  // Handle login logic here
-                  
-                },
-                child: const Text('Login'),
-              ),
-            ],
+            ),
           ),
         ),
       ),

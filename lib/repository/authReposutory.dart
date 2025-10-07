@@ -1,92 +1,61 @@
-import 'package:farmacio_app/screens/home_screen.dart';
-import 'package:farmacio_app/screens/login_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:farmacio_app/database/databaseHelper.dart';
+import 'package:farmacio_app/models/userModel.dart';
+import 'package:sqflite/sqflite.dart';
 
-class AuthRepository extends GetxController {
-  static AuthRepository get instance => Get.find();
+class UserRepository {
+  final _col = FirebaseFirestore.instance.collection('users');
+  Future<Database> get _db async => DatabaseHelper.instance.database;
 
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  late final Rx<User?> _firebaseUser;
-  var verificationId = ''.obs;
-
-  User? get firebaseUser => _firebaseUser.value;
-
-  @override
-  void onReady() {
-    super.onReady();
-    _firebaseUser = Rx<User?>(_firebaseAuth.currentUser);
-    _firebaseUser.bindStream(_firebaseAuth.authStateChanges());
-    setInitialScreen(_firebaseUser.value);
+  // ---------- FIRESTORE ----------
+  Future<void> upsertFirestore(UserModel u) async {
+    await _col.doc(u.firebaseUid).set(u.toFirestore(), SetOptions(merge: true));
   }
 
-  void setInitialScreen(User? user) {
-    if (user == null) {
-      Get.offAll(() => const LoginScreen());
+  Future<UserModel?> getFromFirestore(String uid) async {
+    final snap = await _col.doc(uid).get();
+    if (!snap.exists || snap.data() == null) return null;
+    return UserModel.fromFirestore(uid, snap.data()!);
+  }
+
+  // ---------- SQLITE ----------
+  Future<UserModel?> findByFirebaseUid(String uid) async {
+    final db = await _db;
+    final res = await db.query('users', where: 'firebaseUid = ?', whereArgs: [uid], limit: 1);
+    if (res.isEmpty) return null;
+    return UserModel.fromMap(res.first);
+  }
+
+  Future<UserModel> upsertLocal(UserModel u) async {
+    final db = await _db;
+    final existing = await db.query('users', where: 'firebaseUid = ?', whereArgs: [u.firebaseUid], limit: 1);
+    if (existing.isEmpty) {
+      final id = await db.insert('users', u.toMap());
+      return u.copyWith(id: id);
     } else {
-      Get.offAll(() => const HomeScreen());
-  }
-
-  Future<User?> signInWithEmailAndPassword(String email, String password) async {
-    try {
-      UserCredential userCredential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      return userCredential.user;
-    } catch (e) {
-      print("Error signing in: $e");
-      return null;
-    }
-  }
-  Future<User?> createUserWithEmailAndPassword(String email, String password) async {
-    try {
-      await _firebaseAuth.createUserWithEmailAndPassword(email: email, password: password);
-      _firebaseUser.value != null
-          ? Get.offAll(() => const HomeScreen())
-          : Get.offAll(() => const LoginScreen());
-    }
-    on FirebaseAuthException catch (e) {
-      final ex = SignUpFailure.code(e.code);
-      print('FIREBASE AUTH EXCEPTION - ${ex.message}');
-      throw ex;
-    } catch (_) {
-      const ex = SignUpFailure();
-      print('EXCEPTION - ${ex.message}');
-      throw ex;
-    }
-     
+      await db.update('users', u.toMap(), where: 'firebaseUid = ?', whereArgs: [u.firebaseUid]);
+      return u.copyWith(id: existing.first['id'] as int?);
     }
   }
 
-  Future<void> signOut() async {
-    await _firebaseAuth.signOut();
-  }
+  // ---------- SYNC ----------
+  /// Garante o usuário em ambos os lados e retorna o modelo consolidado local.
+  Future<UserModel> syncUser(UserModel base) async {
+    // Prioridade: Firestore como fonte de verdade para perfil/role/classId
+    final remote = await getFromFirestore(base.firebaseUid);
+    final merged = (remote == null)
+        ? base
+        : base.copyWith(
+            name: remote.name,
+            email: remote.email,
+            avatarUrl: remote.avatarUrl,
+            isGoogleUser: remote.isGoogleUser,
+            role: remote.role,
+            classId: remote.classId,
+          );
 
-  Future<String?> loginWithEmailAndPassword(String email, String password) async {
-    try {
-      await _firebaseAuth.signInWithEmailAndPassword(email: email, password: password);
-      return null;
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        print("Usuario no encontrado");
-        return 'Usuario no encontrado para o email';
-      } else if (e.code == 'wrong-password') {
-        print("Senha incorreta");
-        return 'Senha incorreta.';
-      } else if (e.code == 'invalid-email') {
-        print("Email inválido: $email");
-        return 'Email inválido.';
-      } else if (e.code == 'network-request-failed') {
-        print("Falha na conexao de rede");
-        return 'Falha na conexao de rede.';
-      } else {
-        print("Erro nao tratado: ${e.message}");
-        return "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.";
-      }
-    } catch (e) {
-      print("Erro inesperado");
-      return "Ocorreu um erro durante o login.";
-    }
+    await upsertFirestore(merged);        // garante no remoto (merge)
+    final local = await upsertLocal(merged); // garante no local
+    return local;
+  }
 }
-
