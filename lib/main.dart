@@ -3,30 +3,28 @@ import 'package:flutter/foundation.dart';
 import 'screens/login_screen.dart';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'utils/debug_db.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-
+  // Inicializa o Firebase usando as opções geradas pelo FlutterFire CLI
+  // (`lib/firebase_options.dart`). Isso garante a configuração correta
+  // para cada plataforma (web / android / ios / windows / macos).
+  try {
     await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: "AIzaSyBXtCzxh8_xajxj10G9S3r--qm3PYQVfdM",
-      authDomain: "farmacio.firebaseapp.com",
-      projectId: "farmacio-dbd69",
-      storageBucket: "farmacio.appspot.com",
-      messagingSenderId: "443280514584",
-      appId: "1:443280514584",
-      measurementId: "G-443280514584",
-    )
+      options: DefaultFirebaseOptions.currentPlatform,
     );
-  } else {
+  } catch (e) {
     // ignore: avoid_print
-    await Firebase.initializeApp();
-  
-    print("Error: Firebase configuration is missing. Please provide the necessary configuration.");
-    return;
+    print('Erro ao inicializar o Firebase: $e');
+    rethrow;
   }
-  
+
+  // DEBUG: imprime o registro do usuário (apenas em modo debug).
+  // Substitua o email abaixo pelo e-mail que deseja inspecionar.
+  await printUserByEmail('seu@exemplo.com');
+
   runApp(const MyApp());
 }
 

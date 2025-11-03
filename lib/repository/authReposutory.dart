@@ -1,18 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:farmacio_app/database/databaseHelper.dart';
 import 'package:farmacio_app/models/userModel.dart';
-import 'package:sqflite/sqflite.dart';
+// sqflite types are not required here because DatabaseHelper may return a
+// web adapter (sembast) on web. We keep the code duck-typed and use dynamic.
 
 class UserRepository {
   final _col = FirebaseFirestore.instance.collection('users');
-  Future<Database> get _db async => DatabaseHelper.instance.database;
+  Future<dynamic> get _db async => DatabaseHelper.instance.database;
 
   // ---------- FIRESTORE ----------
   Future<void> upsertFirestore(UserModel u) async {
     await _col.doc(u.firebaseUid).set(u.toFirestore(), SetOptions(merge: true));
   }
 
-  Future<UserModel?> getFromFirestore(String uid) async {
+  Future<UserModel?> getFromFirestore(String? uid) async {
+    if (uid == null || uid.isEmpty) return null;
     final snap = await _col.doc(uid).get();
     if (!snap.exists || snap.data() == null) return null;
     return UserModel.fromFirestore(uid, snap.data()!);
@@ -21,19 +23,34 @@ class UserRepository {
   // ---------- SQLITE ----------
   Future<UserModel?> findByFirebaseUid(String uid) async {
     final db = await _db;
-    final res = await db.query('users', where: 'firebaseUid = ?', whereArgs: [uid], limit: 1);
+    final res = await db.query(
+      'users',
+      where: 'firebaseUid = ?',
+      whereArgs: [uid],
+      limit: 1,
+    );
     if (res.isEmpty) return null;
     return UserModel.fromMap(res.first);
   }
 
   Future<UserModel> upsertLocal(UserModel u) async {
     final db = await _db;
-    final existing = await db.query('users', where: 'firebaseUid = ?', whereArgs: [u.firebaseUid], limit: 1);
+    final existing = await db.query(
+      'users',
+      where: 'firebaseUid = ?',
+      whereArgs: [u.firebaseUid],
+      limit: 1,
+    );
     if (existing.isEmpty) {
       final id = await db.insert('users', u.toMap());
       return u.copyWith(id: id);
     } else {
-      await db.update('users', u.toMap(), where: 'firebaseUid = ?', whereArgs: [u.firebaseUid]);
+      await db.update(
+        'users',
+        u.toMap(),
+        where: 'firebaseUid = ?',
+        whereArgs: [u.firebaseUid],
+      );
       return u.copyWith(id: existing.first['id'] as int?);
     }
   }
@@ -54,7 +71,7 @@ class UserRepository {
             classId: remote.classId,
           );
 
-    await upsertFirestore(merged);        // garante no remoto (merge)
+    await upsertFirestore(merged); // garante no remoto (merge)
     final local = await upsertLocal(merged); // garante no local
     return local;
   }

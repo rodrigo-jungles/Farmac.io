@@ -18,7 +18,7 @@ class SessionService {
     if (u.id != null) await p.setInt(_kUserId, u.id!);
     await p.setString(_kUserName, u.name);
     await p.setString(_kUserEmail, u.email);
-    await p.setString(_kFirebaseUid, u.firebaseUid);
+    if (u.firebaseUid != null) await p.setString(_kFirebaseUid, u.firebaseUid!);
     await p.setBool(_kIsGoogleUser, u.isGoogleUser);
     await p.setString(_kRole, roleToString(u.role));
     if (u.avatarUrl != null) await p.setString(_kAvatarUrl, u.avatarUrl!);

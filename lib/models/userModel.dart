@@ -1,57 +1,43 @@
-// lib/models/user_model.dart
+import 'package:farmacio_app/const/hashedPassword.dart';
 
-enum UserRole { student, teacher, admin }
+enum UserRole { user, admin }
 
-UserRole roleFromString(String? v) {
-  switch (v) {
-    case 'teacher': return UserRole.teacher;
-    case 'admin': return UserRole.admin;
-    case 'student':
-    default: return UserRole.student;
-  }
-}
+String roleToString(UserRole? r) => r == null ? UserRole.user.name : r.name;
 
-String roleToString(UserRole r) {
-  switch (r) {
-    case UserRole.teacher: return 'teacher';
-    case UserRole.admin: return 'admin';
-    case UserRole.student: default: return 'student';
-  }
+UserRole roleFromString(String? s) {
+  if (s == null) return UserRole.user;
+  return UserRole.values.firstWhere(
+    (e) => e.name == s,
+    orElse: () => UserRole.user,
+  );
 }
 
 class UserModel {
-  final int? id;                 // id local (SQLite)
-  final String firebaseUid;      // UID do Firebase Auth
+  final int? id;
+  final String? firebaseUid;
   final String name;
   final String email;
-  final String? avatarUrl;
+  final String? password;
   final bool isGoogleUser;
-  final UserRole role;           // aluno/professor/admin
-  final String? classId;         // turma atual (opcional)
+  final String? avatarUrl;
+  final String? number;
+  final String? lastname;
+  final UserRole? role;
+  final String? classId;
 
   UserModel({
     this.id,
-    required this.firebaseUid,
+    this.firebaseUid,
     required this.name,
     required this.email,
+    this.password,
+    required this.isGoogleUser,
     this.avatarUrl,
-    this.isGoogleUser = false,
-    this.role = UserRole.student,
+    this.number,
+    this.lastname,
+    this.role,
     this.classId,
   });
-
-  factory UserModel.fromMap(Map<String, dynamic> map) {
-    return UserModel(
-      id: map['id'] as int?,
-      firebaseUid: map['firebaseUid'],
-      name: map['name'],
-      email: map['email'],
-      avatarUrl: map['avatarUrl'],
-      isGoogleUser: (map['isGoogleUser'] ?? 0) == 1,
-      role: roleFromString(map['role']),
-      classId: map['classId'],
-    );
-  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -59,36 +45,37 @@ class UserModel {
       'firebaseUid': firebaseUid,
       'name': name,
       'email': email,
-      'avatarUrl': avatarUrl,
+      // Avoid double-hashing: if the password already looks like a
+      // SHA-256 hex (64 lowercase hex chars) keep it as-is, otherwise
+      // hash the plaintext password.
+      'password': password != null && password!.isNotEmpty
+          ? (RegExp(r'^[a-f0-9]{64}$').hasMatch(password!)
+                ? password
+                : hashPassword(password!))
+          : null,
       'isGoogleUser': isGoogleUser ? 1 : 0,
-      'role': roleToString(role),
-      'classId': classId,
-    };
-  }
-
-  factory UserModel.fromFirestore(String uid, Map<String, dynamic> data) {
-    return UserModel(
-      id: null,
-      firebaseUid: uid,
-      name: (data['name'] ?? data['displayName'] ?? data['email'] ?? 'Usuário') as String,
-      email: (data['email'] ?? '') as String,
-      avatarUrl: data['avatarUrl'] as String?,
-      isGoogleUser: (data['isGoogleUser'] ?? false) as bool,
-      role: roleFromString(data['role'] as String?),
-      classId: data['classId'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toFirestore() {
-    return {
-      'name': name,
-      'email': email,
       'avatarUrl': avatarUrl,
-      'isGoogleUser': isGoogleUser,
+      'number': number,
+      'lastname': lastname,
       'role': roleToString(role),
       'classId': classId,
-      'updatedAt': DateTime.now().toUtc().toIso8601String(),
     };
+  }
+
+  factory UserModel.fromMap(Map<String, dynamic> map) {
+    return UserModel(
+      id: map['id'],
+      firebaseUid: map['firebaseUid'],
+      name: map['name'],
+      email: map['email'],
+      password: map['password'],
+      isGoogleUser: map['isGoogleUser'] == 1 || map['isGoogleUser'] == true,
+      avatarUrl: map['avatarUrl'],
+      number: map['number'],
+      lastname: map['lastname'],
+      role: roleFromString(map['role'] as String?),
+      classId: map['classId'] as String?,
+    );
   }
 
   UserModel copyWith({
@@ -96,7 +83,10 @@ class UserModel {
     String? firebaseUid,
     String? name,
     String? email,
+    String? password,
     String? avatarUrl,
+    String? lastname,
+    String? number,
     bool? isGoogleUser,
     UserRole? role,
     String? classId,
@@ -106,10 +96,42 @@ class UserModel {
       firebaseUid: firebaseUid ?? this.firebaseUid,
       name: name ?? this.name,
       email: email ?? this.email,
+      password: password ?? this.password,
       avatarUrl: avatarUrl ?? this.avatarUrl,
+      lastname: lastname ?? this.lastname,
+      number: number ?? this.number,
       isGoogleUser: isGoogleUser ?? this.isGoogleUser,
       role: role ?? this.role,
       classId: classId ?? this.classId,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    final map = <String, dynamic>{
+      'name': name,
+      'email': email,
+      'avatarUrl': avatarUrl,
+      'isGoogleUser': isGoogleUser ? 1 : 0,
+      'role': roleToString(role),
+    };
+    if (classId != null) map['classId'] = classId;
+    if (firebaseUid != null) map['firebaseUid'] = firebaseUid;
+    return map;
+  }
+
+  factory UserModel.fromFirestore(String uid, Map<String, dynamic> map) {
+    return UserModel(
+      id: map['id'],
+      firebaseUid: uid,
+      name: map['name'] ?? '',
+      email: map['email'] ?? '',
+      password: map['password'],
+      isGoogleUser: map['isGoogleUser'] == 1 || map['isGoogleUser'] == true,
+      avatarUrl: map['avatarUrl'],
+      number: map['number'],
+      lastname: map['lastname'],
+      role: roleFromString(map['role'] as String?),
+      classId: map['classId'] as String?,
     );
   }
 }
