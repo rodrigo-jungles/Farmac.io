@@ -54,9 +54,18 @@ class _LoginScreenState extends State<LoginScreen> {
     FocusScope.of(context).unfocus();
 
     if (isSignUp) {
+      // registra e, se não houver mensagem de erro setada pelo controller,
+      // navega para a tela principal
       await _auth.registerEmail(_emailCtrl.text.trim(), _passCtrl.text.trim());
+      if (_auth.errorMessage.value == null) {
+        Get.offAllNamed('/home');
+      }
     } else {
+      // usa o wrapper que já seta errorMessage; se não houver erro, navega
       await _auth.loginEmail(_emailCtrl.text.trim(), _passCtrl.text.trim());
+      if (_auth.errorMessage.value == null) {
+        Get.offAllNamed('/home');
+      }
     }
   }
 
@@ -65,170 +74,217 @@ class _LoginScreenState extends State<LoginScreen> {
     final w = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      backgroundColor: Colors.amber,
+      // fundo preto opaco — antes havia alpha/transparência que deixava o fundo cinza
+      backgroundColor: const Color.fromARGB(255, 112, 63, 38),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
+              // diminui a largura máxima do retângulo branco
+              constraints: const BoxConstraints(maxWidth: 360),
               child: Card(
-                elevation: 0,
+                // garantir cor do card para evitar misturas visuais
+                color: Colors.white,
+                elevation: 2,
                 margin: EdgeInsets.symmetric(horizontal: w < 480 ? 8 : 0),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-                  child: Obx(() => Form(
-                        key: _formKey,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(height: 8),
-                            Text(
-                              isSignUp ? 'Criar conta' : 'Entrar',
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 20,
+                  ),
+                  child: Obx(
+                    () => Form(
+                      key: _formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 8),
+                          // título principal fixo solicitado
+                          const Text(
+                            'FARMAC.IO',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          if (_auth.errorMessage.value != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.red),
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline,
+                                    color: Colors.red,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      _auth.errorMessage.value!,
+                                      style: const TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 18),
+                            const SizedBox(height: 12),
+                          ],
 
-                            if (_auth.errorMessage.value != null) ...[
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.red),
+                          if (isSignUp) ...[
+                            TextFormField(
+                              controller: _nameCtrl,
+                              decoration: const InputDecoration(
+                                labelText: 'Nome',
+                                hintText: 'Seu nome completo',
+                                prefixIcon: Icon(Icons.person_outline),
+                              ),
+                              textInputAction: TextInputAction.next,
+                              validator: _validateName,
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+
+                          TextFormField(
+                            controller: _emailCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'E-mail',
+                              hintText: 'seuemail@exemplo.com',
+                              prefixIcon: Icon(Icons.email_outlined),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.next,
+                            validator: _validateEmail,
+                          ),
+                          const SizedBox(height: 12),
+
+                          TextFormField(
+                            controller: _passCtrl,
+                            decoration: InputDecoration(
+                              labelText: 'Senha',
+                              hintText: 'Mínimo 6 caracteres',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                onPressed: () =>
+                                    setState(() => _obscure = !_obscure),
+                                icon: Icon(
+                                  _obscure
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(Icons.error_outline, color: Colors.red),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        _auth.errorMessage.value!,
-                                        style: const TextStyle(color: Colors.red),
+                                tooltip: _obscure
+                                    ? 'Mostrar senha'
+                                    : 'Ocultar senha',
+                              ),
+                            ),
+                            obscureText: _obscure,
+                            textInputAction: TextInputAction.done,
+                            onFieldSubmitted: (_) => _submit(),
+                            validator: _validatePassword,
+                          ),
+                          const SizedBox(height: 20),
+
+                          SizedBox(
+                            width: double.infinity,
+                            height: 48,
+                            child: ElevatedButton(
+                              onPressed: _auth.isLoading.value ? null : _submit,
+                              style: ElevatedButton.styleFrom(
+                                foregroundColor: Colors.black,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                              ),
+                              child: _auth.isLoading.value
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      isSignUp ? 'CRIAR CONTA' : 'ENTRAR',
+                                      style: const TextStyle(
+                                        color: Colors.black,
                                       ),
                                     ),
-                                  ],
-                                ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          TextButton(
+                            onPressed: _auth.isLoading.value
+                                ? null
+                                : () => setState(() => isSignUp = !isSignUp),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.black,
+                            ),
+                            child: Text(
+                              isSignUp
+                                  ? 'Já tem conta? Entrar'
+                                  : 'Não tem conta? Criar conta',
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                          ),
+
+                          const SizedBox(height: 18),
+                          Row(
+                            children: const [
+                              Expanded(child: Divider(thickness: 1)),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Text("ou"),
                               ),
-                              const SizedBox(height: 12),
+                              Expanded(child: Divider(thickness: 1)),
                             ],
+                          ),
+                          const SizedBox(height: 18),
 
-                            if (isSignUp) ...[
-                              TextFormField(
-                                controller: _nameCtrl,
-                                decoration: const InputDecoration(
-                                  labelText: 'Nome',
-                                  hintText: 'Seu nome completo',
-                                  prefixIcon: Icon(Icons.person_outline),
-                                ),
-                                textInputAction: TextInputAction.next,
-                                validator: _validateName,
-                              ),
-                              const SizedBox(height: 12),
-                            ],
-
-                            TextFormField(
-                              controller: _emailCtrl,
-                              decoration: const InputDecoration(
-                                labelText: 'E-mail',
-                                hintText: 'seuemail@exemplo.com',
-                                prefixIcon: Icon(Icons.email_outlined),
-                              ),
-                              keyboardType: TextInputType.emailAddress,
-                              textInputAction: TextInputAction.next,
-                              validator: _validateEmail,
-                            ),
-                            const SizedBox(height: 12),
-
-                            TextFormField(
-                              controller: _passCtrl,
-                              decoration: InputDecoration(
-                                labelText: 'Senha',
-                                hintText: 'Mínimo 6 caracteres',
-                                prefixIcon: const Icon(Icons.lock_outline),
-                                suffixIcon: IconButton(
-                                  onPressed: () => setState(() => _obscure = !_obscure),
-                                  icon: Icon(
-                                      _obscure ? Icons.visibility : Icons.visibility_off),
-                                  tooltip: _obscure
-                                      ? 'Mostrar senha'
-                                      : 'Ocultar senha',
-                                ),
-                              ),
-                              obscureText: _obscure,
-                              textInputAction: TextInputAction.done,
-                              onFieldSubmitted: (_) => _submit(),
-                              validator: _validatePassword,
-                            ),
-                            const SizedBox(height: 20),
-
-                            SizedBox(
-                              width: double.infinity,
-                              height: 48,
-                              child: ElevatedButton(
-                                onPressed: _auth.isLoading.value ? null : _submit,
-                                style: ElevatedButton.styleFrom(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(28),
-                                  ),
-                                ),
-                                child: _auth.isLoading.value
-                                    ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(strokeWidth: 2),
-                                      )
-                                    : Text(isSignUp ? 'CRIAR CONTA' : 'ENTRAR'),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-
-                            TextButton(
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
                               onPressed: _auth.isLoading.value
                                   ? null
-                                  : () => setState(() => isSignUp = !isSignUp),
-                              child: Text(isSignUp
-                                  ? 'Já tem conta? Entrar'
-                                  : 'Não tem conta? Criar conta'),
-                            ),
-
-                            const SizedBox(height: 18),
-                            Row(
-                              children: const [
-                                Expanded(child: Divider(thickness: 1)),
-                                Padding(
-                                  padding:
-                                      EdgeInsets.symmetric(horizontal: 10),
-                                  child: Text("ou"),
-                                ),
-                                Expanded(child: Divider(thickness: 1)),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-
-                            SizedBox(
-                              width: double.infinity,
-                              child: OutlinedButton.icon(
-                                onPressed:
-                                    _auth.isLoading.value ? null : _auth.loginGoogle,
-                                icon: Image.asset(
-                                  'assets/icons/google.png',
+                                  : _auth.loginGoogle,
+                              icon: Image.asset(
+                                'assets/icons/google.png',
+                                height: 20,
+                                errorBuilder: (c, e, s) => Image.network(
+                                  'https://developers.google.com/identity/images/g-logo.png',
                                   height: 20,
+                                  errorBuilder: (c2, e2, s2) => const Icon(
+                                    Icons.account_circle,
+                                    size: 20,
+                                    color: Colors.black54,
+                                  ),
                                 ),
-                                label: const Text('Entrar com Google'),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.black,
+                              ),
+                              label: const Text(
+                                'Entrar com Google',
+                                style: TextStyle(color: Colors.black),
                               ),
                             ),
-                          ],
-                        ),
-                      )),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

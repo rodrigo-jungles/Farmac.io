@@ -44,8 +44,6 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      print('✅ Usuário carregado da sessão: ${_user?.toMap()}');
-
       setState(() {
         userId = _user?.id;
         futurePrimaryAddress = _adressController.getPrimaryAddress(userId!);
@@ -90,19 +88,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 189, 181, 183),
       appBar: AppBar(
-        backgroundColor: Colors.yellow[700],
+        backgroundColor: const Color.fromARGB(255, 172, 131, 77),
         title: Row(
           children: [
-            const Expanded(
+            Expanded(
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: 'Buscar Empodera',
-                  prefixIcon: Icon(Icons.search, color: Colors.black54),
+                  hintText: 'Buscar Medicamento',
+                  prefixIcon: const Icon(Icons.search, color: Colors.black54),
                   fillColor: Colors.white,
                   filled: true,
-                  contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  border: OutlineInputBorder(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                  border: const OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(25)),
                     borderSide: BorderSide.none,
                   ),
@@ -126,145 +125,99 @@ class _HomeScreenState extends State<HomeScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            Obx(
-              () => UserAccountsDrawerHeader(
-                decoration: BoxDecoration(color: Colors.yellow[700]),
-                accountName: Text(_user?.name ?? 'Usuário'),
-                accountEmail: Text(_user?.email ?? 'email@exemplo.com'),
-                currentAccountPicture: CircleAvatar(
-                  backgroundColor: Colors.white,
-                  backgroundImage: _authController.avatarUrl.value.isNotEmpty
-                      ? NetworkImage(
-                          _authController.avatarUrl.value,
-                        ) // 🔄 Agora carrega a nova imagem
-                      : AssetImage("assets/default_avatar.png")
-                            as ImageProvider,
+            UserAccountsDrawerHeader(
+              accountName: Text(_user?.name ?? 'Usuário'),
+              accountEmail: Text(_user?.email ?? ''),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                child: Text(
+                  (_user?.name != null && _user!.name.isNotEmpty)
+                      ? _user!.name[0].toUpperCase()
+                      : 'U',
+                  style: const TextStyle(fontSize: 24, color: Colors.black),
                 ),
-                onDetailsPressed: () {
-                  if (_user != null) {
-                    Navigator.pushNamed(context, '/profile', arguments: _user);
-                  } else {
-                    Get.snackbar(
-                      'Erro',
-                      'Nenhum usuário logado.',
-                      snackPosition: SnackPosition.BOTTOM,
-                    );
-                  }
-                },
               ),
             ),
-            _buildDrawerItem(Icons.search, 'Buscar'),
-            _buildDrawerItem(Icons.shopping_bag, 'Minhas compras'),
-            _buildDrawerItem(Icons.favorite, 'Favoritos'),
-            _buildDrawerItem(Icons.local_offer, 'Ofertas do dia'),
-            _buildDrawerItem(Icons.history, 'Historico'),
             _buildDrawerItem(
-              Icons.point_of_sale,
-              'Venda Voce',
-              onTap: () {
-                Navigator.pushNamed(context, '/categories');
-              },
+              Icons.person,
+              'Perfil',
+              onTap: () => Get.toNamed('/profile'),
             ),
             _buildDrawerItem(
-              Icons.point_of_sale,
-              'Anuncios',
-              onTap: () {
-                Navigator.pushNamed(context, '/publish');
-              },
+              Icons.history,
+              'Meus Pedidos',
+              onTap: () => Get.toNamed('/orders'),
             ),
-            _buildDrawerItem(Icons.help, 'Ajuda'),
             _buildDrawerItem(
-              Icons.calendar_today,
-              'Calendário',
-              onTap: () {
-                Navigator.pushNamed(context, '/calendar');
-              },
+              Icons.location_on,
+              'Endereços',
+              onTap: () => Get.toNamed('/enderecos'),
             ),
             const Divider(),
-            _buildDrawerItem(Icons.logout, 'Logout', onTap: _logout),
+            ListTile(
+              leading: const Icon(Icons.exit_to_app),
+              title: const Text('Sair'),
+              onTap: _logout,
+            ),
           ],
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    FutureBuilder<Address?>(
-                      future: futurePrimaryAddress,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return Center(child: CircularProgressIndicator());
-                        }
+            FutureBuilder<Address?>(
+              future: futurePrimaryAddress,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 30,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
 
-                        if (!snapshot.hasData || snapshot.data == null) {
-                          return GestureDetector(
-                            onTap: () {
-                              if (userId != null) {
-                                print(
-                                  "✅ Redirecionando para Endereços com userId: $userId",
-                                );
-                                Navigator.pushNamed(
-                                  context,
-                                  '/enderecos',
-                                  arguments: userId,
-                                );
-                              } else {
-                                print(
-                                  "❌ Erro: userId está null. Não pode abrir /enderecos.",
-                                );
-                                Get.snackbar(
-                                  "Erro",
-                                  "Usuário não encontrado. Faça login novamente.",
-                                );
-                              }
-                            },
-                            child: Row(
-                              children: [
-                                Icon(Icons.location_on, color: Colors.red),
-                                SizedBox(width: 5),
-                                Text(
-                                  "Definir endereço principal",
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        final address = snapshot.data!;
-                        return Padding(
-                          padding: const EdgeInsets.all(0.0),
-                          child: Row(
-                            children: [
-                              Icon(Icons.location_on, color: Colors.green),
-                              SizedBox(
-                                child: Text(
-                                  "${address.street}, ${address.number} - ${address.city}",
-                                  style: TextStyle(
-                                    color: Colors.black54,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ],
+                if (!snapshot.hasData || snapshot.data == null) {
+                  return GestureDetector(
+                    onTap: () {
+                      Get.toNamed('/enderecos');
+                    },
+                    child: Row(
+                      children: const [
+                        Icon(Icons.location_on, color: Colors.black54),
+                        SizedBox(width: 8),
+                        Text(
+                          "Definir endereço principal",
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 0, 0, 0),
+                            fontWeight: FontWeight.bold,
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ],
+                  );
+                }
+
+                final address = snapshot.data!;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.location_on, color: Colors.green),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "${address.street}, ${address.number} - ${address.city}",
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 5),
             _buildCategoryIcons(),
@@ -283,26 +236,54 @@ class _HomeScreenState extends State<HomeScreen> {
       height: 100,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        physics: BouncingScrollPhysics(),
+        physics: const BouncingScrollPhysics(),
         itemCount: _categoryItems.length,
         itemBuilder: (context, index) {
           final category = _categoryItems[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.grey.shade200,
-                  child: Icon(category['icon'], size: 30, color: Colors.blue),
+          final sw = MediaQuery.of(context).size.width;
+          // largura proporcional por item, com limites para manter proporção
+          final double itemWidth = (sw * 0.22).clamp(88.0, 140.0);
+          final double avatarRadius = (itemWidth * 0.28).clamp(24.0, 36.0);
+
+          return SizedBox(
+            width: itemWidth,
+            child: Center(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(40),
+                  onTap: () => _onCategoryTap(category),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: avatarRadius,
+                        backgroundColor: Colors.grey.shade200,
+                        child: category['isFa'] == true
+                            ? FaIcon(
+                                category['icon'],
+                                size: avatarRadius * 0.9,
+                                color: Colors.black,
+                              )
+                            : Icon(
+                                category['icon'],
+                                size: avatarRadius * 0.9,
+                                color: Colors.black,
+                              ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        category['label'],
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                SizedBox(height: 5),
-                Text(
-                  category['label'],
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
-                ),
-              ],
+              ),
             ),
           );
         },
@@ -310,20 +291,52 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Handler chamado quando uma categoria é tocada.
+  // Agora usa o campo 'route' definido em cada item para navegar.
+  void _onCategoryTap(Map<String, dynamic> category) {
+    final route = category['route']?.toString();
+    final label = (category['label'] ?? '').toString();
+
+    if (route != null && route.isNotEmpty) {
+      try {
+        Get.toNamed(route);
+      } catch (e) {
+        Get.snackbar(
+          'Navegação',
+          'Não foi possível navegar para $label ($route): $e',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+    } else {
+      Get.snackbar(
+        label,
+        'Abrindo $label...',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   final List<Map<String, dynamic>> _categoryItems = [
-    {'label': 'Mercado', 'icon': Icons.local_grocery_store},
-    {'label': 'Cupons', 'icon': Icons.local_offer},
-    {'label': 'Moda', 'icon': Icons.checkroom},
-    {'label': 'Celulares', 'icon': Icons.phone_android},
-    {'label': 'Veículos', 'icon': Icons.directions_car},
-    {'label': 'Compota', 'icon': FontAwesomeIcons.bottleWater},
+    {'label': 'SintomaQI', 'icon': Icons.psychology, 'route': '/sintomaqi'},
+    {
+      'label': 'Remédios',
+      'icon': FontAwesomeIcons.pills,
+      'route': '/remedios',
+      'isFa': true,
+    },
+    {
+      'label': 'Outros Produtos',
+      'icon': Icons.brush,
+      'route': '/outros-produtos',
+    },
+    {'label': 'Farmácias', 'icon': Icons.local_hospital, 'route': '/farmacias'},
   ];
 
   Widget _buildPromotionsBanner() {
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.blue,
+        color: const Color.fromARGB(255, 0, 0, 0),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -343,10 +356,84 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildProductList() {
     if (_products.isEmpty) {
-      return const Center(
-        child: Text(
-          'Nenhum produto disponível',
-          style: TextStyle(fontSize: 16, color: Colors.grey),
+      // Mostra uma grade simples de produtos a partir de assets/img_produtos quando
+      // não há produtos carregados na lista (_products).
+      const sample = [
+        {'file': 'Pasta_dente.png', 'label': 'Pasta de Dente', 'price': '6.50'},
+        {'file': 'Sabonete.png', 'label': 'Sabonete', 'price': '2.90'},
+        {'file': 'shampoo.png', 'label': 'Shampoo', 'price': '12.00'},
+      ];
+
+      return SizedBox(
+        height: 200,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: sample.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          itemBuilder: (context, index) {
+            final it = sample[index];
+            final path = 'assets/img_produtos/${it['file']}';
+            return Container(
+              width: 140,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(8),
+                      ),
+                      child: Image.asset(
+                        path,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (c, e, s) => Image.asset(
+                          'assets/product_placeholder.png',
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          it['label'] ?? '',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'R\$ ${it['price']}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.green,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       );
     }
@@ -384,17 +471,38 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                        image: DecorationImage(
-                          image: AssetImage(
-                            'assets/product_placeholder.png',
-                          ), // Ajuste conforme necessário
-                          fit: BoxFit.cover,
-                        ),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(8),
+                      ),
+                      child: Builder(
+                        builder: (context) {
+                          final image = product.imageUrl;
+                          if (image.startsWith('http') ||
+                              image.startsWith('https')) {
+                            return Image.network(
+                              image,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                              errorBuilder: (c, e, s) => Image.asset(
+                                'assets/product_placeholder.png',
+                                fit: BoxFit.cover,
+                              ),
+                            );
+                          }
+
+                          return Image.asset(
+                            image,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            height: double.infinity,
+                            errorBuilder: (c, e, s) => Image.asset(
+                              'assets/product_placeholder.png',
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),

@@ -1,6 +1,6 @@
 import 'package:farmacio_app/screens/analise_screen.dart';
 import 'package:farmacio_app/screens/catalogo_screen.dart';
-import 'package:farmacio_app/screens/farmacias_screen.dart';
+import 'package:farmacio_app/screens/farmacias_simple_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {

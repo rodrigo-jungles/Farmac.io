@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:get/get.dart';
 import 'screens/login_screen.dart';
+import 'screens/homeScreen.dart';
+import 'screens/sintomaqi_screen.dart';
+import 'screens/remedios_screen.dart';
+import 'screens/outros_produtos_screen.dart';
+import 'screens/farmacias_simple_screen.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -34,27 +40,24 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
+      // home kept for simplicity; named routes below enable Get.offAllNamed
       home: const LoginScreen(),
+      getPages: [
+        GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(name: '/home', page: () => const HomeScreen()),
+        GetPage(name: '/sintomaqi', page: () => const SintomaQiScreen()),
+        GetPage(name: '/remedios', page: () => const RemediosScreen()),
+        GetPage(
+          name: '/outros-produtos',
+          page: () => const OutrosProdutosScreen(),
+        ),
+        GetPage(name: '/farmacias', page: () => const FarmaciasScreen()),
+      ],
     );
   }
 }

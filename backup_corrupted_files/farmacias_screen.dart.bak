@@ -1,0 +1,214 @@
+import 'dart:math';import 'package:flutter/material.dart';
+
+import 'package:flutter/material.dart';import 'package:flutter_map/flutter_map.dart';
+
+import 'package:latlong2/latlong.dart';
+
+const double _defaultLat = -23.55052;import 'package:geolocator/geolocator.dart';
+
+const double _defaultLng = -46.633308;
+
+class FarmaciasScreen extends StatefulWidget {
+
+class FarmaciasScreen extends StatefulWidget {  const FarmaciasScreen({super.key});
+
+  const FarmaciasScreen({Key? key}) : super(key: key);import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+  @override
+
+  State<FarmaciasScreen> createState() => _FarmaciasScreenState();const double _defaultLat = -23.55052;
+
+}const double _defaultLng = -46.633308;
+
+
+
+class _FarmaciasScreenState extends State<FarmaciasScreen> {class FarmaciasScreen extends StatefulWidget {
+
+  // Lista de farmácias de exemplo  const FarmaciasScreen({Key? key}) : super(key: key);
+
+  final List<Map<String, dynamic>> _pharmacies = [
+
+    {'name': 'Farmácia Central', 'lat': -23.55052, 'lng': -46.633308, 'addr': 'Av. Central, 100'},  @override
+
+    {'name': 'Drogaria Vida', 'lat': -23.55200, 'lng': -46.64000, 'addr': 'Rua A, 123'},  State<FarmaciasScreen> createState() => _FarmaciasScreenState();
+
+    {'name': 'Farmácia Saúde', 'lat': -23.54500, 'lng': -46.63000, 'addr': 'Praça B, 45'},}
+
+  ];
+
+class _FarmaciasScreenState extends State<FarmaciasScreen> {
+
+  late List<Map<String, dynamic>> _sorted;  // Lista de farmácias de exemplo
+
+  final List<Map<String, dynamic>> _pharmacies = [
+
+  @override    {'name': 'Farmácia Central', 'lat': -23.55052, 'lng': -46.633308, 'addr': 'Av. Central, 100'},
+
+  void initState() {    {'name': 'Drogaria Vida', 'lat': -23.55200, 'lng': -46.64000, 'addr': 'Rua A, 123'},
+
+    super.initState();    {'name': 'Farmácia Saúde', 'lat': -23.54500, 'lng': -46.63000, 'addr': 'Praça B, 45'},
+
+    // Ordena pela distância a partir do ponto padrão  ];
+
+    _sorted = List.from(_pharmacies);
+
+    _sorted.sort((a, b) {  late List<Map<String, dynamic>> _sorted;
+
+      final da = _haversine(_defaultLat, _defaultLng, a['lat'], a['lng']);
+
+      final db = _haversine(_defaultLat, _defaultLng, b['lat'], b['lng']);  @override
+
+      return da.compareTo(db);  void initState() {
+
+    });    super.initState();
+
+  }    // Ordena pela distância a partir do ponto padrão
+
+    _sorted = List.from(_pharmacies);
+
+  double _haversine(double lat1, double lon1, double lat2, double lon2) {    _sorted.sort((a, b) {
+
+    // retorna distância aproximada em metros      final da = _haversine(_defaultLat, _defaultLng, a['lat'], a['lng']);
+
+    const R = 6371000; // raio da Terra em metros      final db = _haversine(_defaultLat, _defaultLng, b['lat'], b['lng']);
+
+    final dLat = _deg2rad(lat2 - lat1);      return da.compareTo(db);
+
+    final dLon = _deg2rad(lon2 - lon1);    });
+
+    final a = (sin(dLat / 2) * sin(dLat / 2)) +  }
+
+        cos(_deg2rad(lat1)) * cos(_deg2rad(lat2)) * (sin(dLon / 2) * sin(dLon / 2));
+
+    final c = 2 * atan2(sqrt(a), sqrt(1 - a));  double _haversine(double lat1, double lon1, double lat2, double lon2) {
+
+    return R * c;    // retorna distância aproximada em metros
+
+  }    const R = 6371000; // raio da Terra em metros
+
+    final dLat = _deg2rad(lat2 - lat1);
+
+  double _deg2rad(double deg) => deg * (pi / 180.0);    final dLon = _deg2rad(lon2 - lon1);
+
+    final a = (sin(dLat / 2) * sin(dLat / 2)) +
+
+  @override        cos(_deg2rad(lat1)) * cos(_deg2rad(lat2)) * (sin(dLon / 2) * sin(dLon / 2));
+
+  Widget build(BuildContext context) {    final c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+    return Scaffold(    return R * c;
+
+      appBar: AppBar(title: const Text('Farmácias')),  }
+
+      body: Padding(
+
+        padding: const EdgeInsets.all(12.0),  double _deg2rad(double deg) => deg * (pi / 180.0);
+
+        child: Column(
+
+          children: [  @override
+
+            const Text('Farmácia mais próxima destacada. (Baseada em localização padrão)'),  Widget build(BuildContext context) {
+
+            const SizedBox(height: 12),    return Scaffold(
+
+            Expanded(      appBar: AppBar(title: const Text('Farmácias')),
+
+              child: ListView.separated(      body: Padding(
+
+                itemCount: _sorted.length,        padding: const EdgeInsets.all(12.0),
+
+                separatorBuilder: (_, __) => const Divider(),        child: Column(
+
+                itemBuilder: (context, index) {          children: [
+
+                  final p = _sorted[index];            const Text('Farmácia mais próxima destacada. (Baseada em localização padrão)'),
+
+                  final dist = _haversine(_defaultLat, _defaultLng, p['lat'], p['lng']);            const SizedBox(height: 12),
+
+                  return ListTile(            Expanded(
+
+                    leading: Icon(Icons.local_pharmacy, color: index == 0 ? Colors.red : Colors.blue),              child: ListView.separated(
+
+                    title: Text(p['name']),                itemCount: _sorted.length,
+
+                    subtitle: Text(p['addr'] ?? ''),                separatorBuilder: (_, __) => const Divider(),
+
+                    trailing: Column(                itemBuilder: (context, index) {
+
+                      mainAxisAlignment: MainAxisAlignment.center,                  final p = _sorted[index];
+
+                      children: [                  final dist = _haversine(_defaultLat, _defaultLng, p['lat'], p['lng']);
+
+                        Text(index == 0 ? 'Mais próxima' : '${(dist / 1000).toStringAsFixed(2)} km'),                  return ListTile(
+
+                        if (index == 0) const SizedBox(height: 4),                    leading: Icon(Icons.local_pharmacy, color: index == 0 ? Colors.red : Colors.blue),
+
+                      ],                    title: Text(p['name']),
+
+                    ),                    subtitle: Text(p['addr'] ?? ''),
+
+                    onTap: () {                    trailing: Column(
+
+                      showModalBottomSheet(                      mainAxisAlignment: MainAxisAlignment.center,
+
+                        context: context,                      children: [
+
+                        builder: (_) => Padding(                        Text(index == 0 ? 'Mais próxima' : '${(dist / 1000).toStringAsFixed(2)} km'),
+
+                          padding: const EdgeInsets.all(16.0),                        if (index == 0) const SizedBox(height: 4),
+
+                          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [                      ],
+
+                            Text(p['name'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),                    ),
+
+                            const SizedBox(height: 8),                    onTap: () {
+
+                            Text(p['addr'] ?? ''),                      showModalBottomSheet(
+
+                            const SizedBox(height: 8),                        context: context,
+
+                            Text('Distância aproximada: ${(dist / 1000).toStringAsFixed(2)} km'),                        builder: (_) => Padding(
+
+                            const SizedBox(height: 12),                          padding: const EdgeInsets.all(16.0),
+
+                            ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Fechar'))                          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+
+                          ]),                            Text(p['name'], style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
+                        ),                            const SizedBox(height: 8),
+
+                      );                            Text(p['addr'] ?? ''),
+
+                    },                            const SizedBox(height: 8),
+
+                  );                            Text('Distância aproximada: ${(dist / 1000).toStringAsFixed(2)} km'),
+
+                },                            const SizedBox(height: 12),
+
+              ),                            ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Fechar'))
+
+            ),                          ]),
+
+          ],                        ),
+
+        ),                      );
+
+      ),                    },
+
+    );                  );
+
+  }                },
+
+}              ),
+
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+                      itemCount: _sorted.length,
