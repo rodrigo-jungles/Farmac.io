@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class TermsScreen extends StatefulWidget {
+  const TermsScreen({super.key});
+
   @override
   _TermsScreenState createState() => _TermsScreenState();
 }

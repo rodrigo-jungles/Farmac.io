@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class DeliveryOptionsScreen extends StatefulWidget {
   final Map<String, dynamic> product;
 
-  const DeliveryOptionsScreen({Key? key, required this.product}) : super(key: key);
+  const DeliveryOptionsScreen({super.key, required this.product});
 
   @override
   _DeliveryOptionsScreenState createState() => _DeliveryOptionsScreenState();

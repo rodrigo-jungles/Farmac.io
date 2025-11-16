@@ -9,7 +9,7 @@ import 'dart:convert';
 class EditEnderecosScreen extends StatefulWidget {
   final bool isEditing;
 
-  EditEnderecosScreen({Key? key, required this.isEditing}) : super(key: key);
+  const EditEnderecosScreen({super.key, required this.isEditing});
 
   @override
   _EditEnderecosScreenState createState() => _EditEnderecosScreenState();

@@ -8,6 +8,7 @@ class CatalogoScreen extends StatefulWidget {
 }
 
 class _CatalogoScreenState extends State<CatalogoScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(appBar: AppBar(title: const Text('Catalogo de Remédios')));
   }

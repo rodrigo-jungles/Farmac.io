@@ -1,11 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'pharmacyMenu.dart';
 
 const double _defaultLat = -23.55052;
 const double _defaultLng = -46.633308;
 
 class FarmaciasScreen extends StatefulWidget {
-  const FarmaciasScreen({Key? key}) : super(key: key);
+  const FarmaciasScreen({super.key});
 
   @override
   State<FarmaciasScreen> createState() => _FarmaciasScreenState();
@@ -143,6 +144,28 @@ class _FarmaciasScreenState extends State<FarmaciasScreen> {
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Color.fromARGB(255, 112, 63, 38),
+              foregroundColor: Color.fromARGB(255, 0, 0, 0),
+              minimumSize: const Size.fromHeight(50),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PharmacyMenu()),
+              );
+            },
+            child: const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14.0),
+              child: Text('Abrir menu da farmácia'),
+            ),
+          ),
         ),
       ),
     );

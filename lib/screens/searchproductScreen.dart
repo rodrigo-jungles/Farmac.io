@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class SearchProductScreen extends StatefulWidget {
   final String category;
 
-  const SearchProductScreen({Key? key, required this.category}) : super(key: key);
+  const SearchProductScreen({super.key, required this.category});
 
   @override
   _SearchProductScreenState createState() => _SearchProductScreenState();

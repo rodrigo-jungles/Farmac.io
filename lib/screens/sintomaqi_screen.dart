@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/sintomaController.dart';
+import '../controller/medicineController.dart';
+
+// ignore: must_be_immutable
 
 class SintomaQiScreen extends StatefulWidget {
   const SintomaQiScreen({super.key});
@@ -12,6 +15,9 @@ class SintomaQiScreen extends StatefulWidget {
 class _SintomaQiScreenState extends State<SintomaQiScreen> {
   final SintomaController _ctrl = Get.put(SintomaController());
   final TextEditingController _textCtrl = TextEditingController();
+  final MedicineController _medCtrl = Get.put(MedicineController());
+  final RxList<Map<String, dynamic>> _recommendations =
+      <Map<String, dynamic>>[].obs;
 
   @override
   void dispose() {
@@ -32,6 +38,9 @@ class _SintomaQiScreenState extends State<SintomaQiScreen> {
 
     await _ctrl.add(text);
     _textCtrl.clear();
+    // gerar recomendações
+    final recs = _medCtrl.recommendForText(text);
+    _recommendations.assignAll(recs);
     Get.snackbar(
       'Salvo',
       'Sintoma salvo com sucesso',
@@ -106,6 +115,32 @@ class _SintomaQiScreenState extends State<SintomaQiScreen> {
             }),
             const SizedBox(height: 18),
             const Text(
+              'Recomendações de remédios',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Obx(() {
+              if (_recommendations.isEmpty) {
+                return const Text(
+                  'Nenhuma recomendação encontrada para o sintoma atual.',
+                );
+              }
+              return Column(
+                children: _recommendations.map((m) {
+                  final inds = (m['indications'] as List).join(', ');
+                  return Card(
+                    child: ListTile(
+                      title: Text(m['name'] ?? ''),
+                      subtitle: Text(
+                        'R\$ ${(m['price'] as num).toDouble().toStringAsFixed(2)} • Indicado: $inds',
+                      ),
+                      trailing: Text('score: ${m['score'] ?? 0}'),
+                    ),
+                  );
+                }).toList(),
+              );
+            }),
+            const Text(
               'Histórico de sintomas salvos',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
@@ -140,6 +175,9 @@ class _SintomaQiScreenState extends State<SintomaQiScreen> {
                         // ao tocar re-gerar diagnóstico para este item
                         final diag = _ctrl.generateDiagnosis(s);
                         _ctrl.lastDiagnosis.value = diag;
+                        // recompute recommendations for tapped symptom
+                        final recs = _medCtrl.recommendForText(s);
+                        _recommendations.assignAll(recs);
                       },
                     );
                   },

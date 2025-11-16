@@ -5,10 +5,10 @@ class ConfirmAdScreen extends StatelessWidget {
   final Map<String, dynamic> deliveryOptions;
 
   const ConfirmAdScreen({
-    Key? key,
+    super.key,
     required this.product,
     required this.deliveryOptions,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

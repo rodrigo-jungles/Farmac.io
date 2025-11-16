@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'screens/login_screen.dart';
 import 'screens/homeScreen.dart';
@@ -7,7 +6,7 @@ import 'screens/sintomaqi_screen.dart';
 import 'screens/remedios_screen.dart';
 import 'screens/outros_produtos_screen.dart';
 import 'screens/farmacias_simple_screen.dart';
-
+import 'controller/medicineController.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'utils/debug_db.dart';
@@ -31,6 +30,9 @@ void main() async {
   // Substitua o email abaixo pelo e-mail que deseja inspecionar.
   await printUserByEmail('seu@exemplo.com');
 
+  // Inicializa o controller de remédios globalmente para compartilhar instância
+  Get.put(MedicineController());
+
   runApp(const MyApp());
 }
 
@@ -51,7 +53,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(name: '/home', page: () => const HomeScreen()),
         GetPage(name: '/sintomaqi', page: () => const SintomaQiScreen()),
-        GetPage(name: '/remedios', page: () => const RemediosScreen()),
+        GetPage(name: '/remedios', page: () => RemediosScreen()),
         GetPage(
           name: '/outros-produtos',
           page: () => const OutrosProdutosScreen(),

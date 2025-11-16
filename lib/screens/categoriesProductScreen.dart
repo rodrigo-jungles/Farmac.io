@@ -4,8 +4,7 @@ import 'package:farmacio_app/models/productModel.dart';
 class CategoryProductsScreen extends StatefulWidget {
   final String category;
 
-  const CategoryProductsScreen({Key? key, required this.category})
-      : super(key: key);
+  const CategoryProductsScreen({super.key, required this.category});
 
   @override
   _CategoryProductsScreenState createState() => _CategoryProductsScreenState();

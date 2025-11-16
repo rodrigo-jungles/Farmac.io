@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ProductConfirmationScreen extends StatelessWidget {
   final Map<String, dynamic> product;
 
-  const ProductConfirmationScreen({Key? key, required this.product}) : super(key: key);
+  const ProductConfirmationScreen({super.key, required this.product});
 
   @override
   Widget build(BuildContext context) {

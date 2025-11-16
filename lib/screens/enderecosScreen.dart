@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class EnderecosScreen extends StatefulWidget {
   final int userId;
 
-  EnderecosScreen({required this.userId});
+  const EnderecosScreen({super.key, required this.userId});
 
   @override
   _EnderecosScreenState createState() => _EnderecosScreenState();

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 class MyProductsScreen extends StatefulWidget {
-  const MyProductsScreen({Key? key}) : super(key: key);
+  const MyProductsScreen({super.key});
 
   @override
   _MyProductsScreenState createState() => _MyProductsScreenState();
 }
 
 class _MyProductsScreenState extends State<MyProductsScreen> {
-  List<Map<String, dynamic>> _products = [];
+  final List<Map<String, dynamic>> _products = [];
 
   @override
   void initState() {

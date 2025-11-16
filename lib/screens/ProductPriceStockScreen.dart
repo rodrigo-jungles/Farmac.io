@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ProductPriceStockScreen extends StatefulWidget {
   final Map<String, dynamic> product;
 
-  const ProductPriceStockScreen({Key? key, required this.product}) : super(key: key);
+  const ProductPriceStockScreen({super.key, required this.product});
 
   @override
   _ProductPriceStockScreenState createState() => _ProductPriceStockScreenState();

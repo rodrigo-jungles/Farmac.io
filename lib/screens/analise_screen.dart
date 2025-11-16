@@ -10,6 +10,7 @@ class AnaliseScreen extends StatefulWidget {
 }
 
 class _AnaliseScreenState extends State<AnaliseScreen> {
+  @override
   Widget build(BuildContext context) {
     return Scaffold(appBar: AppBar(title: const Text('Análise Sintomática')),
     body: Column(

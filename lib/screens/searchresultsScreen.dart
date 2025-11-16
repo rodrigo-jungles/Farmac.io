@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class SearchResultsScreen extends StatelessWidget {
   final String category;
 
-  const SearchResultsScreen({Key? key, required this.category}) : super(key: key);
+  const SearchResultsScreen({super.key, required this.category});
 
   final List<Map<String, dynamic>> products = const [
     {

@@ -1,4 +1,3 @@
-import 'package:sembast/sembast.dart';
 import 'package:sembast_web/sembast_web.dart';
 
 /// A very small adapter that provides a subset of the sqflite `Database`
